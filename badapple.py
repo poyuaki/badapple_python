@@ -317,6 +317,7 @@ def main ():
       next_message()
     elif user_input == 4:
       print("Bye")
+      break
 
 if __name__ == '__main__':
   main()
