@@ -1,6 +1,6 @@
 # bad apple!!
 
-<img src="https://github.com/poyuaki/badapple_python/blob/image/sukusyo.png" alt="bad apple!のスクショ" height="200">
+<img src="https://github.com/poyuaki/badapple_python/blob/image/sukusyo.png" alt="bad apple!のスクショ" height="400">
 
 # 内容
 
