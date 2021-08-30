@@ -12,6 +12,7 @@ import fpstimer
 import pygame.mixer
 import math
 from screeninfo import get_monitors
+import random
 
 # テキストの位置
 window_text = {
@@ -100,12 +101,15 @@ def show_window(text):
   global text_c
   global id_window_text
   global window_text
+  global window_size
+
+  gyo_su = len(text.split('\n'))
 
   id_window_text = text_c.create_text(
     window_text["width"],
     window_text["height"],
     text = text,
-    font = ('', 7), # CUSTOM:1文字あたりの大きさ
+    font = ('',math.floor(window_size["height"] / gyo_su)), # CUSTOM:1文字あたりの大きさ(初期値：7)
     fill = "#000000",
     tag="window_text"
   )
@@ -133,6 +137,33 @@ def next_message():
   play_movie()
 
 
+def choice_block ():
+  print("-----------------")
+  print("バグモードを使用しますか？")
+  print("このモードを使用すると生成にめちゃくちゃ時間がかかります。")
+  print("ただし、結構エモくなるのでオススメだったりします")
+  user_ans = ""
+  while True:
+    user_ans = input("バグモードを使用しますか？(y / n) => ")
+    if user_ans != "y" and user_ans != "n":
+      print("正しく入力してください。")
+    else:
+      break
+  if user_ans == "y":
+    return True, []
+  else:
+    print("ここからは、白い部分と黒い部分を表現するテキストを入力します。")
+    print("<<全角>>にしないとヤベェことになるので、<<全角>>で入力してください。")
+    print("空白のまま入力するとデフォルトになります。")
+    white_char = input("白い部分を入力してください => ")
+    black_char = input("黒い部分を入力してください => ")
+    if not white_char:
+      white_char = "□"
+    if not black_char:
+      black_char = "■"
+    return False, [white_char, black_char]
+
+
 def make_frame():
   """
     フレームごとの画像(文字列)を作成する関数
@@ -149,6 +180,15 @@ def make_frame():
 
   dots_array = []
 
+  black_list = ["＃", "＄", "＆", "＜", "＞", "％", "＝", "ー", "〜", "＾", "￥", "＠", "？", "！"]
+
+  is_use_bug, block_char_list = choice_block()
+
+  print("-----------------")
+  print("現在描画に必要なデータを生成中です...")
+  print("終了まで結構時間かかりますので、その間に珈琲でもどうぞ")
+  print("-----------------")
+
   while True:
 
     ret, frame = cap_file.read() # フレームを取得
@@ -164,9 +204,15 @@ def make_frame():
     for y in im_bool:
       for x in y:
         if x: # もしも白い部分なら
-          text += "□"
+          if is_use_bug:
+            text += "　"
+          else:
+            text += block_char_list[0]
         else: # もしも黒い部分なら
-          text += "■"
+          if is_use_bug:
+            text += black_list[random.randrange(0,len(black_list))]
+          else:
+            text += block_char_list[1]
       text += "\n"
     dots_array.append(text)
   
@@ -183,11 +229,12 @@ def play_music ():
     音楽を再生
   """
   pygame.mixer.music.load('badapple.mp3') #CUSTOM:音声ファイル
-  pygame.mixer.music.play(start=0.5) # CUSTOM: 再生位置
+  pygame.mixer.music.play(start=0.55) # CUSTOM: 再生位置
   
 
 def end_message():
   print("終了しました。")
+  pygame.mixer.music.stop()
 
 def adjustment_fps (count, run_time, frame_count):
   """
@@ -261,8 +308,7 @@ def play_movie ():
     timer.sleep()
     text_c.delete("window_text")
     count, run_time, frame_count = adjustment_fps(count, run_time, frame_count)
-
-  root.mainloop()
+  root.destroy()
   end_message()
 
 def make_dots_file (file_name):
@@ -293,9 +339,6 @@ def main ():
     user_input = int(user_input)
 
     if user_input == 1:
-      print("現在描画に必要なデータを生成中です...")
-      print("終了まで結構時間かかりますので、その間に珈琲でもどうぞ")
-      print("-----------------")
       result_array = make_frame()
       next_message()
     elif user_input == 2:
@@ -315,6 +358,8 @@ def main ():
       s = f.read()
       result_array = s.split(',')
       next_message()
+      print("エラーが発生しました。")
+      print("もしかしたらファイル名が間違っているかもしれません。")
     elif user_input == 4:
       print("Bye")
       break
