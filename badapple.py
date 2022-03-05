@@ -33,6 +33,7 @@ debug_flag = {
 for m in get_monitors(): # モニターの幅と高さを取得
   window_size["width"] = m.width
   window_size["height"] = m.height
+  print("{}x{}".format(m.width, m.height))
 
 root = None
 text_c = None
@@ -109,7 +110,7 @@ def show_window(text):
     window_text["width"],
     window_text["height"],
     text = text,
-    font = ('',math.floor(window_size["height"] / gyo_su)), # CUSTOM:1文字あたりの大きさ(初期値：7)
+    font = ('',math.floor(window_size["height"] / gyo_su)), # CUSTOM:1文字あたりの大きさ(初期値：自動的に生成)
     fill = "#000000",
     tag="window_text"
   )
@@ -131,6 +132,7 @@ def next_message():
   print("その場合は、プログラムファイル中の「CUSTOM」の部分を調整してください。")
   print("-----------------")
   user_input = input("エンターキーを押すと再生が始まります。：")
+  debug_flag["fps"] = False
   if user_input == "debug_fps":
     debug_flag["fps"] = True
 
@@ -218,9 +220,10 @@ def make_frame():
   
     count += 1
   
-    if round(count / cap_file.get(cv2.CAP_PROP_FRAME_COUNT) * 100) % 10 == 0 and round(count / cap_file.get(cv2.CAP_PROP_FRAME_COUNT) * 100) != 0 and round(count / cap_file.get(cv2.CAP_PROP_FRAME_COUNT) * 100) != message_count:
-      message_count = round(count / cap_file.get(cv2.CAP_PROP_FRAME_COUNT) * 100)
-      print("{}%完了".format(round(count / cap_file.get(cv2.CAP_PROP_FRAME_COUNT) * 100)))
+    check_percent = round(count / cap_file.get(cv2.CAP_PROP_FRAME_COUNT) * 100)
+    if check_percent % 10 == 0 and check_percent != 0 and check_percent != message_count:
+      message_count = check_percent
+      print("{}%完了".format(check_percent))
   
   return dots_array
 
@@ -312,6 +315,15 @@ def play_movie ():
   end_message()
 
 def make_dots_file (file_name):
+  """
+    dotファイルを作成する関数
+
+      Parameters
+      ----------
+      file_name : str
+        dotsファイルを作成する際のファイル名
+  """
+
   dots_file = make_frame()
   f = open('dots/dotslist_{}.txt'.format(file_name),'w')
   f.write(','.join(map(str, dots_file)))
