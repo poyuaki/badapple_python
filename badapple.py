@@ -15,8 +15,9 @@ from screeninfo import get_monitors
 import random
 import json
 import copy
+from numba import jit
 
-from badapple_convert import make_frame_c
+from convert import make_frame_c
 
 # テキストの位置
 window_text = {
@@ -169,14 +170,72 @@ def choice_block ():
       black_char = "■"
     return False, [white_char, black_char]
 
-def make_frame():
+@jit(nopython=True)
+def make_frame(width, height , ):
   """
     フレームごとの画像(文字列)を作成する関数
   """
 
-  global cap_file
+  
 
-  return make_frame_c(cap_file)
+  count = 0 # どれぐらい完了したかを計測
+
+  message_count = 0 # 現在表示しているパーセントを記録
+
+  beta_array = []
+
+  test_array = []
+
+  print("-----------------")
+  print("現在描画に必要なデータを生成中です...")
+  print("終了まで結構時間かかりますので、その間に珈琲でもどうぞ")
+  print("-----------------")
+
+  while True:
+
+    ret, frame = cap_file.read() # フレームを取得
+
+    if ret == False: # もしフレームがなければ終了する => 動画が終わった
+      break
+
+    bairitu = 0.1
+    frame = cv2.resize(frame , (int(width*bairitu), int(height*bairitu))) # CUSTOM:動画の画質×0.55(初期値)。解像度を落とす場合は値を小さくしてください
+    im_gray = cv2.cvtColor(frame, cv2.COLOR_RGB2GRAY)
+    thresh = 128
+    im_bool = im_gray > thresh # 2値化
+    text = ""
+
+    y_count = 0
+    x_count = 0
+
+    frame_array = []
+
+    for y in im_bool:
+      for x in y:
+        x = int(x)
+        judge_x = abs(x - 1)
+        if count == 0 or (count > 0 and [x_count, y_count, judge_x] in test_array):
+          frame_array.append([x_count, y_count, x])
+          if count > 0:
+            index = test_array.index([x_count, y_count, judge_x])
+            test_array[index] = [x_count, y_count, x]
+        x_count += 1
+      x_count = 0
+      y_count += 1
+
+    beta_array.append(frame_array)
+
+    if count == 0:
+      test_array = copy.copy(beta_array[0])
+  
+    count += 1
+  
+    check_percent = round(count / cap_file.get(cv2.CAP_PROP_FRAME_COUNT) * 100)
+    if check_percent % 2 == 0 and check_percent != 0 and check_percent != message_count:
+      message_count = check_percent
+      print("{}%完了".format(check_percent))
+
+  return beta_array
 
 def play_music ():
   """
@@ -314,6 +373,7 @@ def play_movie ():
   end_message()
 
 def make_dots_file (file_name):
+  global cap_file
   """
     dotファイルを作成する関数
 
@@ -323,7 +383,7 @@ def make_dots_file (file_name):
         dotsファイルを作成する際のファイル名
   """
 
-  dots_file = make_frame()
+  dots_file = make_frame(int(cap_file.get(cv2.CAP_PROP_FRAME_WIDTH)), int(cap_file.get(cv2.CAP_PROP_FRAME_HEIGHT)), cap_file)
   f = open('dots/dotslist_{}.txt'.format(file_name),'w')
   f.write('??'.join(map(str, dots_file)))
 

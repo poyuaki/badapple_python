@@ -1,8 +1,6 @@
 import copy
 import cv2
 import numpy as np
-
-
 def make_frame_c(cap_file):
 
   width = int(cap_file.get(cv2.CAP_PROP_FRAME_WIDTH))
