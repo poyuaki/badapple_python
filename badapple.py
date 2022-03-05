@@ -229,7 +229,7 @@ def play_music ():
   """
     音楽を再生
   """
-  pygame.mixer.music.load('badapple_low.mp3') #CUSTOM:音声ファイル
+  pygame.mixer.music.load('badapple.mp3') #CUSTOM:音声ファイル
   pygame.mixer.music.play(start=0.55) # CUSTOM: 再生位置
   
 
