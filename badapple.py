@@ -39,7 +39,7 @@ text_c = None
 
 result_array = []
 
-cap_file = cv2.VideoCapture('badapple.mp4') #CUSTOM:動画ファイル
+cap_file = cv2.VideoCapture('badapple_lowfps.mp4') #CUSTOM:動画ファイル
 
 def tkinter_setting ():
   """
@@ -293,7 +293,7 @@ def play_movie ():
   tkinter_setting()
   textc_setting()
   
-  timer = fpstimer.FPSTimer(30) # CUSTOM:動画のfps
+  timer = fpstimer.FPSTimer(15) # CUSTOM:動画のfps
 
   play_music()
 
