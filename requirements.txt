@@ -1,0 +1,5 @@
+fpstimer
+pygame
+screeninfo
+opencv-python
+opencv-contrib-python
