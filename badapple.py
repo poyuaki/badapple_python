@@ -197,7 +197,7 @@ def make_frame():
     if ret == False: # もしフレームがなければ終了する => 動画が終わった
       break
 
-    bairitu = 0.1
+    bairitu = 0.55
     frame = cv2.resize(frame , (int(width*bairitu), int(height*bairitu))) # CUSTOM:動画の画質×0.55(初期値)。解像度を落とす場合は値を小さくしてください
     im_gray = cv2.cvtColor(frame, cv2.COLOR_RGB2GRAY)
     thresh = 128
