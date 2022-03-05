@@ -3,6 +3,7 @@
 # 何かおかしいな？って思ったり、リポジトリとは異なるファイルを適用する際は、「CUSTOM」とコメントされている箇所を変更してみてください。
 #
 #################################
+from unittest import result
 import cv2
 import time
 import numpy as np
@@ -12,6 +13,10 @@ import pygame.mixer
 import math
 from screeninfo import get_monitors
 import random
+import json
+import copy
+
+from badapple_convert import make_frame_c
 
 # テキストの位置
 window_text = {
@@ -164,7 +169,6 @@ def choice_block ():
       black_char = "■"
     return False, [white_char, black_char]
 
-
 def make_frame():
   """
     フレームごとの画像(文字列)を作成する関数
@@ -172,60 +176,7 @@ def make_frame():
 
   global cap_file
 
-  width = int(cap_file.get(cv2.CAP_PROP_FRAME_WIDTH))
-  height = int(cap_file.get(cv2.CAP_PROP_FRAME_HEIGHT))
-
-  count = 0 # どれぐらい完了したかを計測
-
-  message_count = 0 # 現在表示しているパーセントを記録
-
-  dots_array = []
-
-  black_list = ["＃", "＄", "＆", "＜", "＞", "％", "＝", "ー", "〜", "＾", "￥", "＠", "？", "！"]
-
-  is_use_bug, block_char_list = choice_block()
-
-  print("-----------------")
-  print("現在描画に必要なデータを生成中です...")
-  print("終了まで結構時間かかりますので、その間に珈琲でもどうぞ")
-  print("-----------------")
-
-  while True:
-
-    ret, frame = cap_file.read() # フレームを取得
-
-    if ret == False: # もしフレームがなければ終了する => 動画が終わった
-      break
-
-    bairitu = 0.55
-    frame = cv2.resize(frame , (int(width*bairitu), int(height*bairitu))) # CUSTOM:動画の画質×0.55(初期値)。解像度を落とす場合は値を小さくしてください
-    im_gray = cv2.cvtColor(frame, cv2.COLOR_RGB2GRAY)
-    thresh = 128
-    im_bool = im_gray > thresh # 2値化
-    text = ""
-    for y in im_bool:
-      for x in y:
-        if x: # もしも白い部分なら
-          if is_use_bug:
-            text += "　"
-          else:
-            text += block_char_list[0]
-        else: # もしも黒い部分なら
-          if is_use_bug:
-            text += black_list[random.randrange(0,len(black_list))]
-          else:
-            text += block_char_list[1]
-      text += "\n"
-    dots_array.append(text)
-  
-    count += 1
-  
-    check_percent = round(count / cap_file.get(cv2.CAP_PROP_FRAME_COUNT) * 100)
-    if check_percent % 10 == 0 and check_percent != 0 and check_percent != message_count:
-      message_count = check_percent
-      print("{}%完了".format(check_percent))
-
-  return dots_array
+  return make_frame_c(cap_file)
 
 def play_music ():
   """
@@ -282,6 +233,53 @@ def adjustment_fps (count, run_time, frame_count):
     frame_count += shortcut
     return 0, time.time(), frame_count
 
+now_str_array = []
+
+def get_str_by_now_str_array ():
+  global now_str_array
+  return '\n'.join(map(str, now_str_array))
+
+def make_str (frame_count):
+  global result_array
+  global now_str_array
+  y_len = result_array[0][len(result_array[0]) - 1][1] # 高さ
+  x_len = result_array[0][len(result_array[0]) - 1][0] # 幅
+
+  def make_str_mark (val):
+    if val == 1:
+      return "□"
+    else:
+      return "■"
+
+  if len(now_str_array) == 0: # now_str_arrayの初期化
+    for y in range(y_len):
+      append_str = ''
+      for x in range(x_len):
+        for c in result_array[0]:
+          if c[0] == x and c[1] == y:
+            append_str = append_str + make_str_mark(c[2])
+            break
+      now_str_array.append(str(append_str))
+
+  def is_here (x, y, arr):
+    for a in arr:
+      if a[0] == x and a[1] == y:
+        return a[2]
+    return "none"
+
+  for y in range(y_len):
+    text = ""
+    for x in range(x_len):
+      res_judge = is_here(x, y, result_array[frame_count])
+      if res_judge != "none":
+        text = text + make_str_mark(res_judge)
+      else:
+        split_array = copy.copy(now_str_array)
+        text = text + split_array[y][x: x + 1]
+    now_str_array[y] = text
+
+      
+
 def play_movie ():
   """
     生成したデータを画面に描画し、動画にする関数
@@ -306,7 +304,8 @@ def play_movie ():
 
   frame_count = 0
   while frame_count < cap_file.get(cv2.CAP_PROP_FRAME_COUNT):
-    r = result_array[frame_count]
+    make_str(frame_count)
+    r = get_str_by_now_str_array()
     show_window(r)
     timer.sleep()
     text_c.delete("window_text")
@@ -326,7 +325,7 @@ def make_dots_file (file_name):
 
   dots_file = make_frame()
   f = open('dots/dotslist_{}.txt'.format(file_name),'w')
-  f.write(','.join(map(str, dots_file)))
+  f.write('??'.join(map(str, dots_file)))
 
 def main ():
   """
@@ -368,7 +367,9 @@ def main ():
       file_name = input("〇〇 => ")
       f = open('dots/dotslist_{}.txt'.format(file_name),'r')
       s = f.read()
-      result_array = s.split(',')
+      result_array = s.split('??')
+      for i in range(len(result_array)):
+        result_array[i] = eval(result_array[i])
       next_message()
       print("エラーが発生しました。")
       print("もしかしたらファイル名が間違っているかもしれません。")
