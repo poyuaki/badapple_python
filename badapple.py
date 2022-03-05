@@ -3,7 +3,6 @@
 # 何かおかしいな？って思ったり、リポジトリとは異なるファイルを適用する際は、「CUSTOM」とコメントされている箇所を変更してみてください。
 #
 #################################
-
 import cv2
 import time
 import numpy as np
@@ -198,7 +197,8 @@ def make_frame():
     if ret == False: # もしフレームがなければ終了する => 動画が終わった
       break
 
-    frame = cv2.resize(frame , (int(width*0.55), int(height*0.55))) # CUSTOM:動画の画質×0.55(初期値)。解像度を落とす場合は値を小さくしてください
+    bairitu = 0.1
+    frame = cv2.resize(frame , (int(width*bairitu), int(height*bairitu))) # CUSTOM:動画の画質×0.55(初期値)。解像度を落とす場合は値を小さくしてください
     im_gray = cv2.cvtColor(frame, cv2.COLOR_RGB2GRAY)
     thresh = 128
     im_bool = im_gray > thresh # 2値化
@@ -224,7 +224,7 @@ def make_frame():
     if check_percent % 10 == 0 and check_percent != 0 and check_percent != message_count:
       message_count = check_percent
       print("{}%完了".format(check_percent))
-  
+
   return dots_array
 
 def play_music ():
