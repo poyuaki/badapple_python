@@ -25,8 +25,8 @@ def make_frame_c(cap_file):
     if ret == False:
       break
 
-    bairitu = 0.2
-    frame = cv2.resize(frame , (int(width*bairitu), int(height*bairitu)))
+    bairitu = 0.1
+    frame = cv2.resize(frame, (int(width*bairitu), int(height*bairitu)))
     im_gray = cv2.cvtColor(frame, cv2.COLOR_RGB2GRAY)
     thresh = 128
     im_bool = im_gray > thresh # 2値化
@@ -37,9 +37,11 @@ def make_frame_c(cap_file):
 
     frame_array = []
 
-    for y in im_bool:
-      for x in y:
-        x = int(x)
+    im_bool = np.array(im_bool)
+
+    while len(im_bool) > y_count:
+      while len(im_bool[y_count]) > x_count:
+        x = int(im_bool[y_count][x_count])
         judge_x = abs(x - 1)
         if count == 0 or (count > 0 and [x_count, y_count, judge_x] in test_array):
           frame_array.append([x_count, y_count, x])
